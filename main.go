@@ -39,16 +39,18 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
 }
 
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
-	var updatedTask Task
-	if err := json.NewDecoder(r.Body).Decode(&updatedTask); err != nil {
+	var task Task
+	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
-	result := DB.Model(&Task{}).Where("id = ?", updatedTask.ID).Updates(updatedTask)
+	result := DB.Model(&Task{}).Where("id = ?", task.ID).Updates(task)
 
 	if result.RowsAffected == 0 {
 		http.Error(w, "Task not found", http.StatusInternalServerError)
@@ -59,7 +61,16 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error updating task", http.StatusInternalServerError)
 		return
 	}
+
+	var updatedTask Task
+	if err := DB.First(&updatedTask, task.ID).Error; err != nil {
+		http.Error(w, "Failed to retrieve updated task", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedTask)
 }
 
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +100,7 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/tasks", GetTasks).Methods(http.MethodGet)
-	router.HandleFunc("/api/setTask", CreateTask).Methods(http.MethodPost)
+	router.HandleFunc("/api/tasks", CreateTask).Methods(http.MethodPost)
 	router.HandleFunc("/api/tasks", UpdateTask).Methods(http.MethodPut)
 	router.HandleFunc("/api/tasks/{id}", DeleteTask).Methods(http.MethodDelete)
 
