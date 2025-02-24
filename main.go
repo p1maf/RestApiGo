@@ -2,40 +2,52 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
 
-var task string
+func GetTask(w http.ResponseWriter, r *http.Request) {
+	var task []Task
 
-type TaskResponse struct {
-	Task string `json:"task"`
+	if err := DB.Find(&task).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
 }
 
-func HelloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "hello", task)
-}
-
-func SetTaskHandler(w http.ResponseWriter, r *http.Request) {
-	var taskResponse TaskResponse
+func CreateTask(w http.ResponseWriter, r *http.Request) {
+	var task Task
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&taskResponse); err != nil {
+	if err := decoder.Decode(&task); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
-	task = taskResponse.Task
+	if err := DB.Create(&task).Error; err != nil {
+		http.Error(w, "Error creating task", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
 
 func main() {
+	InitDB()
+	DB.AutoMigrate(&Task{})
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/hello", HelloHandler).Methods("GET")
-	router.HandleFunc("/api/setTask", SetTaskHandler).Methods("POST")
+	router.HandleFunc("/api/tasks", GetTask).Methods("GET")
+	router.HandleFunc("/api/setTask", CreateTask).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
