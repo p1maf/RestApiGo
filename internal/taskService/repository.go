@@ -9,7 +9,7 @@ type TaskRepository interface {
 	CreateTask(task Task) (Task, error)
 	GetAllTasks() ([]Task, error)
 	UpdateTaskById(id uint, task Task) (Task, error)
-	DeleteTaskById(id string) error
+	DeleteTaskById(id uint) error
 }
 
 type taskRepository struct {
@@ -56,7 +56,7 @@ func (r *taskRepository) UpdateTaskById(id uint, task Task) (Task, error) {
 	return updatedTask, nil
 }
 
-func (r *taskRepository) DeleteTaskById(id string) error {
+func (r *taskRepository) DeleteTaskById(id uint) error {
 	result := r.db.Unscoped().Delete(&Task{}, id)
 
 	if result.RowsAffected == 0 {

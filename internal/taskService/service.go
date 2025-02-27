@@ -20,6 +20,6 @@ func (s *TaskService) UpdateTaskById(id uint, task Task) (Task, error) {
 	return s.repository.UpdateTaskById(id, task)
 }
 
-func (s *TaskService) DeleteTaskById(id string) error {
+func (s *TaskService) DeleteTaskById(id uint) error {
 	return s.repository.DeleteTaskById(id)
 }
