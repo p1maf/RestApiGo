@@ -58,6 +58,17 @@ func (repo *userRepository) DeleteUserById(id uint) error {
 }
 
 func (repo *userRepository) UpdateUserById(id uint, user users.UpdateUser) (users.User, error) {
+	var hashedPassword []byte
+	if user.Password != nil {
+		var err error
+		hashedPassword, err = bcrypt.GenerateFromPassword([]byte(*user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return users.User{}, err
+		}
+	}
+	hashedPasswordStr := string(hashedPassword)
+
+	user.Password = &hashedPasswordStr
 
 	result := repo.db.Model(&users.User{}).Where("id = ?", id).Updates(user)
 	if result.Error != nil {
