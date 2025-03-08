@@ -17,8 +17,9 @@ import (
 // Task defines model for Task.
 type Task struct {
 	Id     *uint   `json:"id,omitempty"`
-	IsDone *bool   `json:"isDone,omitempty"`
+	IsDone *bool   `json:"is_done,omitempty"`
 	Task   *string `json:"task,omitempty"`
+	UserId *uint   `json:"userId,omitempty"`
 }
 
 // PatchTasksJSONRequestBody defines body for PatchTasks for application/json ContentType.
@@ -41,6 +42,9 @@ type ServerInterface interface {
 	// Delete task
 	// (DELETE /tasks/{id})
 	DeleteTasksId(ctx echo.Context, id uint) error
+	// Get task by user id
+	// (GET /tasks/{id})
+	GetTasksId(ctx echo.Context, id uint) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -91,6 +95,22 @@ func (w *ServerInterfaceWrapper) DeleteTasksId(ctx echo.Context) error {
 	return err
 }
 
+// GetTasksId converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTasksId(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id uint
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTasksId(ctx, id)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -123,6 +143,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PATCH(baseURL+"/tasks", wrapper.PatchTasks)
 	router.POST(baseURL+"/tasks", wrapper.PostTasks)
 	router.DELETE(baseURL+"/tasks/:id", wrapper.DeleteTasksId)
+	router.GET(baseURL+"/tasks/:id", wrapper.GetTasksId)
 
 }
 
@@ -192,6 +213,23 @@ func (response DeleteTasksId204Response) VisitDeleteTasksIdResponse(w http.Respo
 	return nil
 }
 
+type GetTasksIdRequestObject struct {
+	Id uint `json:"id"`
+}
+
+type GetTasksIdResponseObject interface {
+	VisitGetTasksIdResponse(w http.ResponseWriter) error
+}
+
+type GetTasksId202JSONResponse []Task
+
+func (response GetTasksId202JSONResponse) VisitGetTasksIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Get all tasks
@@ -206,6 +244,9 @@ type StrictServerInterface interface {
 	// Delete task
 	// (DELETE /tasks/{id})
 	DeleteTasksId(ctx context.Context, request DeleteTasksIdRequestObject) (DeleteTasksIdResponseObject, error)
+	// Get task by user id
+	// (GET /tasks/{id})
+	GetTasksId(ctx context.Context, request GetTasksIdRequestObject) (GetTasksIdResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -320,6 +361,31 @@ func (sh *strictHandler) DeleteTasksId(ctx echo.Context, id uint) error {
 		return err
 	} else if validResponse, ok := response.(DeleteTasksIdResponseObject); ok {
 		return validResponse.VisitDeleteTasksIdResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetTasksId operation middleware
+func (sh *strictHandler) GetTasksId(ctx echo.Context, id uint) error {
+	var request GetTasksIdRequestObject
+
+	request.Id = id
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTasksId(ctx.Request().Context(), request.(GetTasksIdRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTasksId")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetTasksIdResponseObject); ok {
+		return validResponse.VisitGetTasksIdResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

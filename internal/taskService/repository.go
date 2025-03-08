@@ -10,6 +10,7 @@ type TaskRepository interface {
 	GetAllTasks() ([]Task, error)
 	UpdateTaskById(id uint, task Task) (Task, error)
 	DeleteTaskById(id uint) error
+	GetTaskByUserId(userId uint) ([]Task, error)
 }
 
 type taskRepository struct {
@@ -31,6 +32,15 @@ func (r *taskRepository) CreateTask(task Task) (Task, error) {
 func (r *taskRepository) GetAllTasks() ([]Task, error) {
 	var tasks []Task
 	err := r.db.Find(&tasks).Error
+	if err != nil {
+		return []Task{}, err
+	}
+	return tasks, nil
+}
+
+func (r *taskRepository) GetTaskByUserId(userId uint) ([]Task, error) {
+	var tasks []Task
+	err := r.db.Where("user_id = ?", userId).Find(&tasks).Error
 	if err != nil {
 		return []Task{}, err
 	}
