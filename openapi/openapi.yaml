@@ -35,24 +35,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
-    patch:
-      summary: Update task
-      tags:
-        - tasks
-      requestBody:
-        description: The task to create
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Task'
-      responses:
-        '200':
-          description: The created task
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Task'
   /tasks/{id}:
     delete:
       summary: Delete task
@@ -69,27 +51,32 @@ paths:
       responses:
         '204':
           description: Task delete
-    get:
-      summary: Get task by user id
+    patch:
+      summary: Update task
       tags:
         - tasks
       parameters:
         - in: path
           name: id
+          required: true
           schema:
             type: integer
             format: uint
-          required: true
-          description: ID user
+          description: ID of the task to update
+      requestBody:
+        description: The task to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
       responses:
-        '202':
-          description: Task user
+        '200':
+          description: The created task
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Task'
+                $ref: '#/components/schemas/Task'
   /users:
     get:
       tags:
@@ -167,7 +154,28 @@ paths:
             description: User deleted successfully
           '404':
             description: User not found
-
+  /users/{id}/tasks:
+    get:
+      summary: Get task by user id
+      tags:
+        - tasks
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+            format: uint
+          required: true
+          description: ID user
+      responses:
+        '202':
+          description: Task user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
 
 components:
   schemas:

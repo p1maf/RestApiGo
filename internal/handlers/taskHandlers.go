@@ -10,12 +10,33 @@ type Handler struct {
 	Service *taskService.TaskService
 }
 
-func (h *Handler) GetTasksId(ctx context.Context, request tasks.GetTasksIdRequestObject) (tasks.GetTasksIdResponseObject, error) {
+func (h *Handler) PatchTasksId(ctx context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
+	taskToUpdate := taskService.Task{
+		Task:   *request.Body.Task,
+		IsDone: *request.Body.IsDone,
+	}
+
+	updatedTask, err := h.Service.UpdateTaskById(request.Id, taskToUpdate)
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := tasks.PatchTasksId200JSONResponse{
+		Id:     &updatedTask.ID,
+		Task:   &updatedTask.Task,
+		IsDone: &updatedTask.IsDone,
+	}
+
+	return response, nil
+}
+
+func (h *Handler) GetUsersIdTasks(ctx context.Context, request tasks.GetUsersIdTasksRequestObject) (tasks.GetUsersIdTasksResponseObject, error) {
 	tasksUser, err := h.Service.GetTaskByUserId(request.Id)
 	if err != nil {
 		return nil, err
 	}
-	response := tasks.GetTasksId202JSONResponse{}
+	response := tasks.GetUsersIdTasks202JSONResponse{}
 
 	for _, tsk := range tasksUser {
 		task := tasks.Task{
@@ -25,28 +46,6 @@ func (h *Handler) GetTasksId(ctx context.Context, request tasks.GetTasksIdReques
 		}
 		response = append(response, task)
 	}
-	return response, nil
-}
-
-func (h *Handler) PatchTasks(_ context.Context, request tasks.PatchTasksRequestObject) (tasks.PatchTasksResponseObject, error) {
-
-	taskToUpdate := taskService.Task{
-		Task:   *request.Body.Task,
-		IsDone: *request.Body.IsDone,
-	}
-
-	updatedTask, err := h.Service.UpdateTaskById(*request.Body.Id, taskToUpdate)
-
-	if err != nil {
-		return nil, err
-	}
-
-	response := tasks.PatchTasks200JSONResponse{
-		Id:     &updatedTask.ID,
-		Task:   &updatedTask.Task,
-		IsDone: &updatedTask.IsDone,
-	}
-
 	return response, nil
 }
 
