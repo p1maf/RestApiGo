@@ -14,6 +14,7 @@ func (h *Handler) PatchTasksId(ctx context.Context, request tasks.PatchTasksIdRe
 	taskToUpdate := taskService.Task{
 		Task:   *request.Body.Task,
 		IsDone: *request.Body.IsDone,
+		UserId: *request.Body.UserId,
 	}
 
 	updatedTask, err := h.Service.UpdateTaskById(request.Id, taskToUpdate)
@@ -26,6 +27,7 @@ func (h *Handler) PatchTasksId(ctx context.Context, request tasks.PatchTasksIdRe
 		Id:     &updatedTask.ID,
 		Task:   &updatedTask.Task,
 		IsDone: &updatedTask.IsDone,
+		UserId: &updatedTask.UserId,
 	}
 
 	return response, nil
@@ -72,6 +74,7 @@ func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (ta
 			Id:     &tsk.ID,
 			Task:   &tsk.Task,
 			IsDone: &tsk.IsDone,
+			UserId: &tsk.UserId,
 		}
 		response = append(response, task)
 	}
