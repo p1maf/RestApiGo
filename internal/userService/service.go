@@ -1,6 +1,7 @@
 package userService
 
 import (
+	"fmt"
 	"github.com/your-username/RestApiGo/internal/taskService"
 	"github.com/your-username/RestApiGo/internal/web/users"
 )
@@ -19,6 +20,8 @@ func (service *UserService) CreateUser(user users.NewUser) (users.User, error) {
 }
 
 func (service *UserService) GetAllUsers() ([]users.User, error) {
+	d := 123
+	fmt.Println(d)
 	return service.Repository.GetAllUsers()
 }
 
