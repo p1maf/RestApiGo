@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/your-username/RestApiGo/internal/database"
@@ -26,6 +27,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	fmt.Println("ququuququq")
 
 	strictTaskHandler := tasks.NewStrictHandler(tasksHandler, nil)
 	strictUserHandler := users.NewStrictHandler(usersHandler, nil)
