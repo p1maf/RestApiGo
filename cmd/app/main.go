@@ -29,6 +29,7 @@ func main() {
 	e.Use(middleware.Recover())
 	fmt.Println("ququuququq")
 
+	fmt.Println("ququq iz missing marshal")
 	strictTaskHandler := tasks.NewStrictHandler(tasksHandler, nil)
 	strictUserHandler := users.NewStrictHandler(usersHandler, nil)
 	tasks.RegisterHandlers(e, strictTaskHandler)
